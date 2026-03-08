@@ -10,14 +10,28 @@
 
 ### Via install script (recommended — enables auto-logging)
 
+If you have the repo cloned locally:
+
 ```bash
 git clone https://github.com/mariano-aguero/claude-daily.git
 cd claude-daily
-chmod +x install.sh
 ./install.sh
 ```
 
+Without cloning (installs directly from GitHub):
+
+```bash
+curl -fsSL https://github.com/mariano-aguero/claude-daily/archive/refs/heads/main.tar.gz \
+  | tar -xz --strip-components=1 -C /tmp/claude-daily --one-top-level \
+  && bash /tmp/claude-daily/install.sh \
+  && rm -rf /tmp/claude-daily
+```
+
 This installs the skill **and** registers background hooks that auto-log your sessions without any manual action.
+
+### Update
+
+Run the same install command again — it detects an existing installation, updates the skill and hooks, and preserves your work log.
 
 ### Via skills CLI (skill only — no auto-logging hooks)
 
@@ -25,7 +39,9 @@ This installs the skill **and** registers background hooks that auto-log your se
 npx skills add mariano-aguero/claude-daily
 ```
 
-> **Note:** The skills CLI installs only the commands. Auto-logging requires the hooks from `install.sh`.
+This installs only the commands (`/daily`, `/log`, etc.). Auto-logging hooks are **not** included.
+
+If you installed via `npx` and want to add the hooks later, run the install script above — it won't overwrite your existing work log.
 
 ## Commands
 
