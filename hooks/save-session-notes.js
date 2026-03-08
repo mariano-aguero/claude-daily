@@ -42,9 +42,11 @@ const isGitRepo = spawnSync("git", ["rev-parse", "--is-inside-work-tree"],
 const now = new Date();
 // Use local time for both date and time to avoid UTC/local mismatch around midnight
 const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-// Match worklog-context.js: read WORKLOG_DAYS env var so both hooks share the same window
+// Match worklog-context.js: read WORKLOG_DAYS and WORKLOG_ENTRIES so both hooks share the same config
 const parsedContextDays = parseInt(process.env.WORKLOG_DAYS ?? "3", 10);
 const CONTEXT_DAYS = Number.isNaN(parsedContextDays) ? 3 : Math.max(1, parsedContextDays);
+const parsedContextEntries = parseInt(process.env.WORKLOG_ENTRIES ?? "5", 10);
+const CONTEXT_ENTRIES = Number.isNaN(parsedContextEntries) ? 5 : Math.max(1, parsedContextEntries);
 const contextCutoff = new Date(now.getTime() - CONTEXT_DAYS * 86400000);
 const contextCutoffDate = `${contextCutoff.getFullYear()}-${String(contextCutoff.getMonth() + 1).padStart(2, "0")}-${String(contextCutoff.getDate()).padStart(2, "0")}`;
 const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -139,7 +141,7 @@ const lastEntries = worklogLines
     const m = l.match(/^- \[(\d{4}-\d{2}-\d{2})/);
     return !m || m[1] >= contextCutoffDate;
   })
-  .slice(-5);
+  .slice(-CONTEXT_ENTRIES);
 const notesPath = path.join(claudeDir, "session-notes.md");
 
 let manualSection = "";
