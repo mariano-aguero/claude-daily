@@ -7,7 +7,7 @@
  * <daily-worklog> block at session start.
  *
  * Configurable via environment variables:
- *   WORKLOG_ENTRIES  Max entries to inject (default: 5)
+ *   WORKLOG_ENTRIES  Max entries to inject (default: 5, minimum: 1; 0 is treated as 1)
  *   WORKLOG_DAYS     Window in days for dated entries (default: 3)
  *
  * Installed to: ~/.claude/hooks/daily-standup/worklog-context.js
@@ -18,7 +18,8 @@ const os = require("os");
 const path = require("path");
 
 const worklogPath = path.join(os.homedir(), ".daily-worklog", "current.md");
-const maxEntries = Math.max(1, parseInt(process.env.WORKLOG_ENTRIES ?? "5", 10) || 5);
+const parsed = parseInt(process.env.WORKLOG_ENTRIES ?? "5", 10);
+const maxEntries = Math.max(1, Number.isNaN(parsed) ? 5 : parsed);
 const daysWindow = parseInt(process.env.WORKLOG_DAYS ?? "3", 10) || 3;
 // Use local time to match the local-time dates written by save-session-notes.js
 const cutoffDay = new Date(Date.now() - daysWindow * 86400000);

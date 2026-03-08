@@ -36,8 +36,9 @@ if (input.stop_hook_active) process.exit(0);
 const home = os.homedir();
 // Use git rev-parse to correctly detect repos in monorepos, worktrees, and sub-directories
 // (fs.existsSync(".git") fails for any path that isn't the repo root)
+const GIT_TIMEOUT = 5000;
 const isGitRepo = spawnSync("git", ["rev-parse", "--is-inside-work-tree"],
-  { encoding: "utf-8" }).status === 0;
+  { encoding: "utf-8", timeout: GIT_TIMEOUT }).status === 0;
 const now = new Date();
 // Use local time for both date and time to avoid UTC/local mismatch around midnight
 const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -45,14 +46,14 @@ const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes
 const timestamp = now.toISOString();
 
 const branch = isGitRepo
-  ? spawnSync("git", ["branch", "--show-current"], { encoding: "utf-8" }).stdout?.trim() ?? ""
+  ? spawnSync("git", ["branch", "--show-current"], { encoding: "utf-8", timeout: GIT_TIMEOUT }).stdout?.trim() ?? ""
   : "";
 const statusOut = isGitRepo
-  ? spawnSync("git", ["status", "--porcelain"], { encoding: "utf-8" }).stdout?.trim() ?? ""
+  ? spawnSync("git", ["status", "--porcelain"], { encoding: "utf-8", timeout: GIT_TIMEOUT }).stdout?.trim() ?? ""
   : "";
 const modified = statusOut.split("\n").filter(Boolean).slice(0, 10);
 const recentCommits = isGitRepo
-  ? spawnSync("git", ["log", "--format=%H %s", "-5"], { encoding: "utf-8" })
+  ? spawnSync("git", ["log", "--format=%H %s", "-5"], { encoding: "utf-8", timeout: GIT_TIMEOUT })
       .stdout?.trim()
       .split("\n")
       .filter(Boolean) ?? []
@@ -82,7 +83,7 @@ try {
 const recentWindow = worklogLines.slice(-40).join("\n");
 const alreadyLoggedByHash = recentCommits.some((c) => {
   const [hash] = c.split(" ");
-  return hash && hash.length >= 8 && recentWindow.includes(hash.slice(0, 8));
+  return hash && recentWindow.includes(hash.slice(0, 8));
 });
 const firstCommitMsg = recentCommits[0]?.split(" ").slice(1).join(" ") ?? "";
 const alreadyLoggedByContent =

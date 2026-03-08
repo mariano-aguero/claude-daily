@@ -35,7 +35,6 @@ def main():
 
     worklog = os.path.expanduser("~/.daily-worklog/current.md")
     archive_dir = os.path.expanduser("~/.daily-worklog/archive")
-    cutoff = (datetime.date.today() - datetime.timedelta(days=args.days)).isoformat()
 
     os.makedirs(archive_dir, exist_ok=True)
 
@@ -48,6 +47,7 @@ def main():
     if args.all:
         old, keep = lines, []
     else:
+        cutoff = (datetime.date.today() - datetime.timedelta(days=args.days)).isoformat()
         old, keep = [], []
         for line in lines:
             m = re.match(r"- \[(\d{4}-\d{2}-\d{2})", line)
