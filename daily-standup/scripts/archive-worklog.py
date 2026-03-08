@@ -32,6 +32,9 @@ def main():
     )
     args = parser.parse_args()
 
+    if args.days < 1:
+        parser.error("--days must be at least 1")
+
     worklog = os.path.expanduser("~/.daily-worklog/current.md")
     archive_dir = os.path.expanduser("~/.daily-worklog/archive")
 

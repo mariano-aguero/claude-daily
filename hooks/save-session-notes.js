@@ -33,10 +33,10 @@ try {
 // Prevent re-entry loops
 if (input.stop_hook_active) process.exit(0);
 
+const GIT_TIMEOUT = 5000;
 const home = os.homedir();
 // Use git rev-parse to correctly detect repos in monorepos, worktrees, and sub-directories
 // (fs.existsSync(".git") fails for any path that isn't the repo root)
-const GIT_TIMEOUT = 5000;
 const isGitRepo = spawnSync("git", ["rev-parse", "--is-inside-work-tree"],
   { encoding: "utf-8", timeout: GIT_TIMEOUT }).status === 0;
 const now = new Date();
