@@ -41,7 +41,7 @@ def main():
     os.makedirs(archive_dir, exist_ok=True)
 
     try:
-        with open(worklog) as f:
+        with open(worklog, encoding="utf-8") as f:
             lines = f.readlines()
     except FileNotFoundError:
         return
@@ -77,11 +77,11 @@ def main():
         existing_archive = []
         if not args.all:
             try:
-                with open(archive_file) as f:
+                with open(archive_file, encoding="utf-8") as f:
                     existing_archive = f.readlines()
             except FileNotFoundError:
                 pass
-        with tempfile.NamedTemporaryFile("w", dir=archive_dir, delete=False, suffix=".tmp") as arc_tmp:
+        with tempfile.NamedTemporaryFile("w", dir=archive_dir, delete=False, suffix=".tmp", encoding="utf-8") as arc_tmp:
             arc_tmp.writelines(existing_archive + old)
             arc_tmp_path = arc_tmp.name
         os.replace(arc_tmp_path, archive_file)
@@ -96,7 +96,7 @@ def main():
     dir_ = os.path.dirname(worklog)
     tmp_path = None
     try:
-        with tempfile.NamedTemporaryFile("w", dir=dir_, delete=False, suffix=".tmp") as tmp:
+        with tempfile.NamedTemporaryFile("w", dir=dir_, delete=False, suffix=".tmp", encoding="utf-8") as tmp:
             tmp.writelines(keep)
             tmp_path = tmp.name
         os.replace(tmp_path, worklog)

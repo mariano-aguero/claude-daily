@@ -75,7 +75,7 @@ const addedStart = addHook(settings.hooks.SessionStart, startCmd);
 
 fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
 const tmpSettings = settingsPath + '.tmp';
-fs.writeFileSync(tmpSettings, JSON.stringify(settings, null, 4));
+fs.writeFileSync(tmpSettings, JSON.stringify(settings, null, 2));
 fs.renameSync(tmpSettings, settingsPath);
 
 if (addedStop) console.log('✅ Registered Stop hook (auto-log on session end)');

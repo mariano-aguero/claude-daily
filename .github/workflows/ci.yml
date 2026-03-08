@@ -73,7 +73,7 @@ jobs:
       - name: Functional test archive script (--all)
         run: |
           mkdir -p ~/.daily-worklog/archive
-          printf -- "- [2026-03-08 09:00] entry one\n- [2026-03-08 10:00] entry two\n" > ~/.daily-worklog/current.md
+          printf -- "- [$(date +%Y-%m-%d) 09:00] entry one\n- [$(date +%Y-%m-%d) 10:00] entry two\n" > ~/.daily-worklog/current.md
           python3 daily-standup/scripts/archive-worklog.py --all
           [ ! -s ~/.daily-worklog/current.md ] || (echo "❌ current.md should be empty after --all"; exit 1)
           ls ~/.daily-worklog/archive/*.md | grep -q "$(date +%Y-%m-%d)" || (echo "❌ Timestamped archive file not created"; exit 1)

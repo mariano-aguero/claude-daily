@@ -63,7 +63,7 @@ if (settings.hooks) {
 }
 
 const tmpSettings = settingsPath + '.tmp';
-fs.writeFileSync(tmpSettings, JSON.stringify(settings, null, 4));
+fs.writeFileSync(tmpSettings, JSON.stringify(settings, null, 2));
 fs.renameSync(tmpSettings, settingsPath);
 console.log('✅ Hook registrations removed from settings.json');
 NODEJS

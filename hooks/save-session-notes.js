@@ -42,9 +42,10 @@ const isGitRepo = spawnSync("git", ["rev-parse", "--is-inside-work-tree"],
 const now = new Date();
 // Use local time for both date and time to avoid UTC/local mismatch around midnight
 const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-// Match the 3-day window used by worklog-context.js for consistent context injection
-const CONTEXT_DAYS = 3;
-const contextCutoff = new Date(Date.now() - CONTEXT_DAYS * 86400000);
+// Match worklog-context.js: read WORKLOG_DAYS env var so both hooks share the same window
+const parsedContextDays = parseInt(process.env.WORKLOG_DAYS ?? "3", 10);
+const CONTEXT_DAYS = Number.isNaN(parsedContextDays) ? 3 : Math.max(1, parsedContextDays);
+const contextCutoff = new Date(now.getTime() - CONTEXT_DAYS * 86400000);
 const contextCutoffDate = `${contextCutoff.getFullYear()}-${String(contextCutoff.getMonth() + 1).padStart(2, "0")}-${String(contextCutoff.getDate()).padStart(2, "0")}`;
 const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 const timestamp = now.toISOString();
@@ -90,12 +91,14 @@ const alreadyLoggedByHash = recentCommits.some((c) => {
   return hash && recentWindow.includes(hash.slice(0, 8));
 });
 const firstCommitMsg = recentCommits[0]?.split(" ").slice(1).join(" ") ?? "";
+// Stored entries replace " with ' — use the same transform so dedup matches correctly
+const firstCommitMsgStored = firstCommitMsg.replace(/"/g, "'");
 const alreadyLoggedByContent =
   branch &&
-  firstCommitMsg.length > 5 &&
+  firstCommitMsgStored.length > 5 &&
   recentWindow.includes("[AUTO-STOP]") &&
   recentWindow.includes(branch) &&
-  recentWindow.includes(firstCommitMsg.slice(0, 30));
+  recentWindow.includes(firstCommitMsgStored.slice(0, 30));
 
 if (!alreadyLoggedByHash && !alreadyLoggedByContent && branch) {
   const topHash = recentCommits[0]?.split(" ")[0]?.slice(0, 8) ?? "";
