@@ -20,7 +20,8 @@ const path = require("path");
 const worklogPath = path.join(os.homedir(), ".daily-worklog", "current.md");
 const parsed = parseInt(process.env.WORKLOG_ENTRIES ?? "5", 10);
 const maxEntries = Math.max(1, Number.isNaN(parsed) ? 5 : parsed);
-const daysWindow = parseInt(process.env.WORKLOG_DAYS ?? "3", 10) || 3;
+const parsedDays = parseInt(process.env.WORKLOG_DAYS ?? "3", 10);
+const daysWindow = Number.isNaN(parsedDays) ? 3 : Math.max(1, parsedDays);
 // Use local time to match the local-time dates written by save-session-notes.js
 const cutoffDay = new Date(Date.now() - daysWindow * 86400000);
 const cutoffDate = `${cutoffDay.getFullYear()}-${String(cutoffDay.getMonth() + 1).padStart(2, "0")}-${String(cutoffDay.getDate()).padStart(2, "0")}`;

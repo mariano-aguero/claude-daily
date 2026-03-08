@@ -33,6 +33,15 @@ jobs:
           node hooks/worklog-context.js
           echo '{"stop_hook_active":true}' | node hooks/save-session-notes.js
 
+      - name: Functional test SessionStart hook (with worklog content)
+        run: |
+          mkdir -p ~/.daily-worklog
+          printf -- "- [$(date +%Y-%m-%d) 09:00] test entry\n" > ~/.daily-worklog/current.md
+          output=$(node hooks/worklog-context.js)
+          echo "$output" | grep -q "daily-worklog" || (echo "❌ No <daily-worklog> block in output"; exit 1)
+          echo "$output" | grep -q "test entry" || (echo "❌ Entry not found in output"; exit 1)
+          echo "✅ SessionStart hook injects worklog content"
+
       - name: Functional test Stop hook (non-re-entry path)
         run: |
           mkdir -p ~/.daily-worklog
