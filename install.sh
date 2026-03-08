@@ -11,6 +11,8 @@ export SETTINGS="$HOME/.claude/settings.json"
 command -v node >/dev/null 2>&1 || { echo "❌ Node.js 18+ is required. Install from https://nodejs.org"; exit 1; }
 node -e "const v=parseInt(process.version.slice(1));if(v<18){console.error('❌ Node.js 18+ required (found '+process.version+')');process.exit(1)}"
 command -v python3 >/dev/null 2>&1 || { echo "❌ Python 3 is required."; exit 1; }
+python3 -c "import sys; v=sys.version_info; exit(0 if (v.major,v.minor)>=(3,12) else 1)" 2>/dev/null \
+  || { echo "❌ Python 3.12+ is required (found: $(python3 --version 2>&1))."; exit 1; }
 
 echo "🗓️  Installing claude-daily..."
 echo ""

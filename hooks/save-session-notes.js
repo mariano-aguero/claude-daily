@@ -42,6 +42,10 @@ const isGitRepo = spawnSync("git", ["rev-parse", "--is-inside-work-tree"],
 const now = new Date();
 // Use local time for both date and time to avoid UTC/local mismatch around midnight
 const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+// Match the 3-day window used by worklog-context.js for consistent context injection
+const CONTEXT_DAYS = 3;
+const contextCutoff = new Date(Date.now() - CONTEXT_DAYS * 86400000);
+const contextCutoffDate = `${contextCutoff.getFullYear()}-${String(contextCutoff.getMonth() + 1).padStart(2, "0")}-${String(contextCutoff.getDate()).padStart(2, "0")}`;
 const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 const timestamp = now.toISOString();
 
@@ -51,12 +55,12 @@ const branch = isGitRepo
 const statusOut = isGitRepo
   ? spawnSync("git", ["status", "--porcelain"], { encoding: "utf-8", timeout: GIT_TIMEOUT }).stdout?.trim() ?? ""
   : "";
-const modified = statusOut.split("\n").filter(Boolean).slice(0, 10);
+const allModified = statusOut.split("\n").filter(Boolean);
 const recentCommits = isGitRepo
-  ? spawnSync("git", ["log", "--format=%H %s", "-5"], { encoding: "utf-8", timeout: GIT_TIMEOUT })
-      .stdout?.trim()
+  ? (spawnSync("git", ["log", "--format=%H %s", "-5"], { encoding: "utf-8", timeout: GIT_TIMEOUT })
+      .stdout?.trim() ?? "")
       .split("\n")
-      .filter(Boolean) ?? []
+      .filter(Boolean)
   : [];
 // Derive display format (short hash + subject) from the same data
 const logOut = recentCommits
@@ -102,7 +106,7 @@ if (!alreadyLoggedByHash && !alreadyLoggedByContent && branch) {
   const parts = [`branch: ${branch}${topHash ? ` (${topHash})` : ""}`];
   if (commitMessages.length) parts.push(`commits: "${commitMessages.map((m) => m.replace(/"/g, "'")).join('", "')}"`);
 
-  if (modified.length) parts.push(`${modified.length} file${modified.length > 1 ? "s" : ""} modified`);
+  if (allModified.length) parts.push(`${allModified.length} file${allModified.length > 1 ? "s" : ""} modified`);
   const entry = `- [${date} ${time}] [AUTO-STOP] ${parts.join(" — ")}`;
   try {
     fs.appendFileSync(worklogPath, `${entry}\n`);
@@ -126,7 +130,13 @@ if (!fs.existsSync(claudeDir)) process.exit(0);
 const localHookPath = path.join(claudeDir, "hooks", "save-session-notes.js");
 if (fs.existsSync(localHookPath)) process.exit(0);
 
-const lastEntries = worklogLines.filter((l) => !l.includes("[COMPACT]")).slice(-5);
+const lastEntries = worklogLines
+  .filter((l) => {
+    if (!l.trim() || l.includes("[COMPACT]")) return false;
+    const m = l.match(/^- \[(\d{4}-\d{2}-\d{2})/);
+    return !m || m[1] >= contextCutoffDate;
+  })
+  .slice(-5);
 const notesPath = path.join(claudeDir, "session-notes.md");
 
 let manualSection = "";
@@ -160,7 +170,7 @@ sections.push(
     `_Last updated: ${timestamp}_`,
     ``,
     `**Branch:** ${branch || "(none)"}`,
-    `**Modified files:** ${modified.length === 0 ? "none" : modified.length > 5 ? `${modified.length} files` : modified.join(", ")}`,
+    `**Modified files:** ${allModified.length === 0 ? "none" : allModified.length > 5 ? `${allModified.length} files` : allModified.map(l => l.slice(3)).join(", ")}`,
     `**Recent commits:**`,
     logOut ? logOut.split("\n").map((l) => `- ${l}`).join("\n") : "- (none)",
   ].join("\n")

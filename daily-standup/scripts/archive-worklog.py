@@ -58,53 +58,54 @@ def main():
             else:
                 keep.append(line)
 
-    if old:
-        # --all uses timestamp suffix to avoid overwriting same-day clears
-        if args.all:
-            ts = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
-            archive_file = os.path.join(archive_dir, f"{ts}.md")
-        else:
-            archive_file = os.path.join(archive_dir, datetime.date.today().isoformat() + ".md")
-
-        # Atomic write for archive file: prevents partial writes on crash.
-        # For append mode, read existing content first and combine with new entries.
-        arc_tmp_path = None
-        try:
-            existing_archive = []
-            if not args.all:
-                try:
-                    with open(archive_file) as f:
-                        existing_archive = f.readlines()
-                except FileNotFoundError:
-                    pass
-            with tempfile.NamedTemporaryFile("w", dir=archive_dir, delete=False, suffix=".tmp") as arc_tmp:
-                arc_tmp.writelines(existing_archive + old)
-                arc_tmp_path = arc_tmp.name
-            os.replace(arc_tmp_path, archive_file)
-        except Exception:
-            if arc_tmp_path and os.path.exists(arc_tmp_path):
-                os.unlink(arc_tmp_path)
-            raise
-
-        # Atomic write: write keep to a temp file, then replace worklog atomically.
-        # Prevents data loss if the process is interrupted mid-write.
-        # Cleanup on error prevents orphaned .tmp files if writelines fails (e.g. disk full).
-        dir_ = os.path.dirname(worklog)
-        tmp_path = None
-        try:
-            with tempfile.NamedTemporaryFile("w", dir=dir_, delete=False, suffix=".tmp") as tmp:
-                tmp.writelines(keep)
-                tmp_path = tmp.name
-            os.replace(tmp_path, worklog)
-        except Exception:
-            if tmp_path and os.path.exists(tmp_path):
-                os.unlink(tmp_path)
-            raise
-
-        print(f"Archived {len(old)} entries → {os.path.basename(archive_file)}")
-    else:
+    if not old:
         label = "nothing to archive" if args.all else f"no entries older than {cutoff}"
         print(f"Done ({label})")
+        return
+
+    # --all uses timestamp suffix to avoid overwriting same-day clears
+    if args.all:
+        ts = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        archive_file = os.path.join(archive_dir, f"{ts}.md")
+    else:
+        archive_file = os.path.join(archive_dir, datetime.date.today().isoformat() + ".md")
+
+    # Atomic write for archive file: prevents partial writes on crash.
+    # For append mode, read existing content first and combine with new entries.
+    arc_tmp_path = None
+    try:
+        existing_archive = []
+        if not args.all:
+            try:
+                with open(archive_file) as f:
+                    existing_archive = f.readlines()
+            except FileNotFoundError:
+                pass
+        with tempfile.NamedTemporaryFile("w", dir=archive_dir, delete=False, suffix=".tmp") as arc_tmp:
+            arc_tmp.writelines(existing_archive + old)
+            arc_tmp_path = arc_tmp.name
+        os.replace(arc_tmp_path, archive_file)
+    except Exception:
+        if arc_tmp_path and os.path.exists(arc_tmp_path):
+            os.unlink(arc_tmp_path)
+        raise
+
+    # Atomic write: write keep to a temp file, then replace worklog atomically.
+    # Prevents data loss if the process is interrupted mid-write.
+    # Cleanup on error prevents orphaned .tmp files if writelines fails (e.g. disk full).
+    dir_ = os.path.dirname(worklog)
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile("w", dir=dir_, delete=False, suffix=".tmp") as tmp:
+            tmp.writelines(keep)
+            tmp_path = tmp.name
+        os.replace(tmp_path, worklog)
+    except Exception:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+    print(f"Archived {len(old)} entries → {os.path.basename(archive_file)}")
 
 
 if __name__ == "__main__":
