@@ -134,14 +134,32 @@ Auto-generated (you don't write these):
     └── 2026-03-05.md       ← from auto-archival via /log
 ```
 
-Entries older than 3 days are automatically archived when you run `/log`.
+Entries older than 3 days are automatically archived when you run `/log`. The window is configurable via `WORKLOG_DAYS`.
+
+## Configuration
+
+Both hooks are configurable via environment variables in `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "WORKLOG_DAYS": "5",
+    "WORKLOG_ENTRIES": "10"
+  }
+}
+```
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `WORKLOG_DAYS` | `3` | Days of history injected at session start and shown in session notes |
+| `WORKLOG_ENTRIES` | `5` | Max entries injected into context at session start |
 
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)
 - Node.js 18+
 - Git
-- Python 3
+- Python 3.12+
 - (Optional) [GitHub CLI](https://cli.github.com/) for PR info
 
 ## Limitations
