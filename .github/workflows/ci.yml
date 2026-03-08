@@ -47,7 +47,8 @@ jobs:
         run: |
           mkdir -p ~/.daily-worklog
           touch ~/.daily-worklog/current.md
-          echo '{}' | node hooks/save-session-notes.js
+          tmpdir=$(mktemp -d)
+          (cd "$tmpdir" && echo '{}' | node "$GITHUB_WORKSPACE/hooks/save-session-notes.js")
           [ ! -s ~/.daily-worklog/current.md ] || (echo "❌ Unexpected entry written outside git repo"; exit 1)
           echo "✅ No entry written outside git repo"
 
