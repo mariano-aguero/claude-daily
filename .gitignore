@@ -1,1 +1,7 @@
-.idea
+.idea/
+__pycache__/
+*.pyc
+*.tmp
+.DS_Store
+.env
+node_modules/

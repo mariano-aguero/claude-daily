@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Shellcheck bash scripts
+        run: shellcheck --severity=warning install.sh uninstall.sh
+
+      - name: Validate Node hooks
+        run: |
+          node --check hooks/save-session-notes.js
+          node --check hooks/worklog-context.js
+
+      - name: Smoke test Node hooks
+        run: |
+          node hooks/worklog-context.js
+          echo '{"stop_hook_active":true}' | node hooks/save-session-notes.js
+
+      - name: Functional test Stop hook (non-re-entry path)
+        run: |
+          mkdir -p ~/.daily-worklog
+          touch ~/.daily-worklog/current.md
+          echo '{}' | node hooks/save-session-notes.js
+          [ ! -s ~/.daily-worklog/current.md ] || (echo "❌ Unexpected entry written outside git repo"; exit 1)
+          echo "✅ No entry written outside git repo"
+
+      - name: Validate Python script
+        run: python3 -m py_compile daily-standup/scripts/archive-worklog.py
+
+      - name: Smoke test archive script (help + edge cases)
+        run: |
+          python3 daily-standup/scripts/archive-worklog.py --help
+          python3 daily-standup/scripts/archive-worklog.py
+          python3 daily-standup/scripts/archive-worklog.py --days 7
+          python3 daily-standup/scripts/archive-worklog.py --all
+
+      - name: Functional test archive script (partial)
+        run: |
+          mkdir -p ~/.daily-worklog/archive
+          printf -- "- [2020-01-01 09:00] old entry\n- [$(date +%Y-%m-%d) 10:00] today entry\n" > ~/.daily-worklog/current.md
+          python3 daily-standup/scripts/archive-worklog.py
+          grep -r "old entry" ~/.daily-worklog/archive/ || (echo "❌ Archive failed: old entry not found in archive"; exit 1)
+          grep "today entry" ~/.daily-worklog/current.md || (echo "❌ Keep failed: today entry removed from current"; exit 1)
+          echo "✅ Partial archive behavior verified"
+
+      - name: Functional test archive script (--all)
+        run: |
+          mkdir -p ~/.daily-worklog/archive
+          printf -- "- [2026-03-08 09:00] entry one\n- [2026-03-08 10:00] entry two\n" > ~/.daily-worklog/current.md
+          python3 daily-standup/scripts/archive-worklog.py --all
+          [ ! -s ~/.daily-worklog/current.md ] || (echo "❌ current.md should be empty after --all"; exit 1)
+          ls ~/.daily-worklog/archive/*.md | grep -q "$(date +%Y-%m-%d)" || (echo "❌ Timestamped archive file not created"; exit 1)
+          grep -r "entry one" ~/.daily-worklog/archive/ || (echo "❌ Content not found in archive"; exit 1)
+          grep -r "entry two" ~/.daily-worklog/archive/ || (echo "❌ Content not found in archive"; exit 1)
+          echo "✅ --all archive behavior verified"
