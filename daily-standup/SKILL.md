@@ -7,7 +7,7 @@ description: >-
 license: MIT
 metadata:
   author: mariano-aguero
-  version: "1.3"
+  version: "1.4"
 ---
 
 # Daily Standup Generator

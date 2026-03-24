@@ -18,7 +18,7 @@ const os = require("os");
 const path = require("path");
 
 const worklogPath = path.join(os.homedir(), ".daily-worklog", "current.md");
-const parsed = parseInt(process.env.WORKLOG_ENTRIES ?? "5", 10);
+const parsed = parseInt(process.env.WORKLOG_ENTRIES ?? "10", 10);
 const maxEntries = Math.max(1, Number.isNaN(parsed) ? 5 : parsed);
 const parsedDays = parseInt(process.env.WORKLOG_DAYS ?? "3", 10);
 const daysWindow = Number.isNaN(parsedDays) ? 3 : Math.max(1, parsedDays);

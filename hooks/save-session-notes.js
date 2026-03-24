@@ -45,7 +45,7 @@ const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")
 // Match worklog-context.js: read WORKLOG_DAYS and WORKLOG_ENTRIES so both hooks share the same config
 const parsedContextDays = parseInt(process.env.WORKLOG_DAYS ?? "3", 10);
 const CONTEXT_DAYS = Number.isNaN(parsedContextDays) ? 3 : Math.max(1, parsedContextDays);
-const parsedContextEntries = parseInt(process.env.WORKLOG_ENTRIES ?? "5", 10);
+const parsedContextEntries = parseInt(process.env.WORKLOG_ENTRIES ?? "10", 10);
 const CONTEXT_ENTRIES = Number.isNaN(parsedContextEntries) ? 5 : Math.max(1, parsedContextEntries);
 const contextCutoff = new Date(now.getTime() - CONTEXT_DAYS * 86400000);
 const contextCutoffDate = `${contextCutoff.getFullYear()}-${String(contextCutoff.getMonth() + 1).padStart(2, "0")}-${String(contextCutoff.getDate()).padStart(2, "0")}`;
@@ -55,6 +55,10 @@ const timestamp = now.toISOString();
 const branch = isGitRepo
   ? spawnSync("git", ["branch", "--show-current"], { encoding: "utf-8", timeout: GIT_TIMEOUT }).stdout?.trim() ?? ""
   : "";
+const repoRoot = isGitRepo
+  ? spawnSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf-8", timeout: GIT_TIMEOUT }).stdout?.trim() ?? ""
+  : "";
+const repoName = repoRoot ? path.basename(repoRoot) : "";
 const statusOut = isGitRepo
   ? spawnSync("git", ["status", "--porcelain"], { encoding: "utf-8", timeout: GIT_TIMEOUT }).stdout?.trim() ?? ""
   : "";
@@ -108,7 +112,9 @@ if (!alreadyLoggedByHash && !alreadyLoggedByContent && branch) {
     .slice(0, 3)
     .map((c) => c.split(" ").slice(1).join(" "))
     .filter(Boolean);
-  const parts = [`branch: ${branch}${topHash ? ` (${topHash})` : ""}`];
+  const parts = [];
+  if (repoName) parts.push(`repo: ${repoName}`);
+  parts.push(`branch: ${branch}${topHash ? ` (${topHash})` : ""}`);
   if (commitMessages.length) parts.push(`commits: "${commitMessages.map((m) => m.replace(/"/g, "'")).join('", "')}"`);
 
   if (allModified.length) parts.push(`${allModified.length} file${allModified.length > 1 ? "s" : ""} modified`);
